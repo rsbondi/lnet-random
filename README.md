@@ -26,3 +26,4 @@ lnet-cli shutdown
 
 ```
 
+[youtube video](https://youtu.be/Z6EAhRpU2Nw)
