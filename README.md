@@ -21,6 +21,11 @@ cd lnet-random
 # open another terminal and run
 ./start.sh
 
+# optionally, generate random activity
+# this will create random invoices and pay them to/from random nodes
+# it will run continuously until you manually stop
+node activity.js
+
 # when finished, close the UI and run
 lnet-cli shutdown
 
