@@ -87,7 +87,8 @@ function getsocket(node) {
     sock.on('error', (derp) => {
         console.log('ERROR:' + derp);
     })
-
+    
+    sockets[node] = sock
     return sock
     
 }
