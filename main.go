@@ -9,27 +9,38 @@ import (
 	"strings"
 )
 
+type node struct {
+	Buff     string
+	Cmds     []string
+	CmdIndex *int
+}
+
 func main() {
-	buffs := make(map[string]string)
-	buffs["sleepy"] = ""
-	buffs["grumpy"] = ""
-	currentbuff := "sleepy"
+	nodes := make(map[string]*node)
+	s := -1
+	sleepy := &node{"", []string{}, &s}
+	nodes["sleepy"] = sleepy
+	g := -1
+	grumpy := &node{"", []string{}, &g}
+	nodes["grumpy"] = grumpy
+	currentnode := "sleepy"
 
 	app := tview.NewApplication()
-	middle := tview.NewTextView()
+	middle := tview.NewTextView().SetDynamicColors(true)
+
 	cli := tview.NewInputField()
 	middle.SetBorder(true).SetTitle("CLI Result")
 	list := tview.NewList().
 		AddItem("Sleepy", "2 in 1 out 92000 sats", 'a', func() {
 			cli.SetText("")
-			currentbuff = "sleepy"
-			middle.SetText(buffs["sleepy"])
+			currentnode = "sleepy"
+			middle.SetText(nodes["sleepy"].Buff)
 			app.SetFocus(cli)
 		}).
 		AddItem("Grumpy", "Some explanatory text", 'b', func() {
 			cli.SetText("")
-			currentbuff = "grumpy"
-			middle.SetText(buffs["grumpy"])
+			currentnode = "grumpy"
+			middle.SetText(nodes["grumpy"].Buff)
 			app.SetFocus(cli)
 		}).
 		AddItem("Dopy", "Some explanatory text", 'c', nil).
@@ -46,8 +57,14 @@ func main() {
 
 	cli.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
 		if key.Key() == tcell.KeyEnter {
-
-			args, err := parseCommandLine(cli.GetText())
+			text := cli.GetText()
+			cmdfmt := fmt.Sprintf("[#ff0000]# %s[white]\n", text)
+			fmt.Fprintf(middle, cmdfmt)
+			if text == "" {
+				fmt.Fprintf(middle, "Please provide a command to execute\n")
+				return key
+			}
+			args, err := parseCommandLine(text)
 			if err != nil {
 				fmt.Fprintf(middle, "%s\n", err.Error())
 			}
@@ -61,9 +78,33 @@ func main() {
 			}
 
 			fmt.Fprintf(middle, "%s\n", out.String())
-			buffs[currentbuff] += out.String()
+			nodes[currentnode].Buff += cmdfmt
+			nodes[currentnode].Buff += out.String()
+			nodes[currentnode].Cmds = append(nodes[currentnode].Cmds, cli.GetText())
+			*nodes[currentnode].CmdIndex = len(nodes[currentnode].Cmds)
 
 			cli.SetText("")
+		} else if key.Key() == tcell.KeyUp {
+			index := nodes[currentnode].CmdIndex
+			if *index > 0 {
+				*index = *index - 1
+			}
+			if *index >= 0 && *index < len(nodes[currentnode].Cmds) {
+				cli.SetText(nodes[currentnode].Cmds[*index])
+			}
+		} else if key.Key() == tcell.KeyDown {
+			index := nodes[currentnode].CmdIndex
+			if *index == len(nodes[currentnode].Cmds)-1 {
+				cli.SetText("")
+				*index = *index + 1
+				return key
+			}
+			if *index < len(nodes[currentnode].Cmds)-1 {
+				*index = *index + 1
+			}
+			if *index >= 0 && *index < len(nodes[currentnode].Cmds) {
+				cli.SetText(nodes[currentnode].Cmds[*index])
+			}
 		}
 		return key
 	})
