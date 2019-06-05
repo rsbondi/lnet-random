@@ -21,6 +21,9 @@ cd lnet-random
 # open another terminal and run
 ./start.sh
 
+# the above will set config and launch nodesdebug GUI
+# optionally you can use the CLI UI (WIP) instead of above script, see link below
+
 # optionally, generate random activity
 # this will create random invoices and pay them to/from random nodes
 # it will run continuously until you manually stop
@@ -31,4 +34,6 @@ lnet-cli shutdown
 
 ```
 
-[youtube video](https://youtu.be/Z6EAhRpU2Nw)
+[GUI video](https://youtu.be/Z6EAhRpU2Nw)
+
+[Video for CLI UI](https://youtu.be/Hb2-DwtqYYk)
