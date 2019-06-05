@@ -17,34 +17,45 @@ type node struct {
 
 type alias struct {
 	Name *string
-	Path string
+	Path *string
 }
 
 var app = tview.NewApplication()
 
 func main() {
-	sleepy := "sleepy"
-	grumpy := "grumpy"
-	dopey := "dopey"
-	sneezy := "sneezy"
-	aliases := []*alias{
-		&alias{&sleepy, ""},
-		&alias{&grumpy, ""},
-		&alias{&dopey, ""},
-		&alias{&sneezy, ""},
-	}
-	nodes := make(map[string]*node)
-	currentnode := "sleepy"
 
 	cliresult := tview.NewTextView().SetDynamicColors(true)
 	cli := tview.NewInputField()
 	list := tview.NewList()
 
-	// sections := []tview.Primitive{cli, cliresult, list}
+	cmd := exec.Command("lnet-cli", "alias")
+	cmd.Stdin = strings.NewReader("some input")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		fmt.Fprintf(cliresult, "%s\n", err.Error())
+	}
+
+	lines := strings.Split(out.String(), "\n")
+	aliases := make(map[string]*alias)
+	for _, line := range lines {
+		args, _ := parseCommandLine(line)
+		if len(args) > 0 {
+			name := strings.Split(args[1], "-")[1]
+			cmd := args[2][1:]
+			aliases[name] = &alias{&name, &cmd}
+			fmt.Fprintf(cliresult, "%q\n", cmd)
+		}
+	}
+
+	nodes := make(map[string]*node)
+	currentnode := "sleepy"
 
 	cliresult.SetBorder(true).SetTitle("CLI Result")
 
-	for i, a := range aliases {
+	i := 0
+	for _, a := range aliases {
 		s := -1
 		anode := &node{"", []string{}, &s}
 		nodes[*a.Name] = anode
@@ -56,6 +67,7 @@ func main() {
 			cliresult.SetText(nodes[*name].Buff)
 			app.SetFocus(cli)
 		})
+		i++
 	}
 
 	list.AddItem("Quit", "Press to exit", 'q', func() {
@@ -81,7 +93,10 @@ func main() {
 			if err != nil {
 				fmt.Fprintf(cliresult, "%s\n", err.Error())
 			}
-			cmd := exec.Command(args[0], args[1:]...)
+			clicmd := strings.Split(*aliases[currentnode].Path, " ")
+			cliarg := []string{clicmd[1]}
+			cliargs := append(cliarg, args...)
+			cmd := exec.Command(clicmd[0], cliargs...)
 			cmd.Stdin = strings.NewReader("some input")
 			var out bytes.Buffer
 			cmd.Stdout = &out
