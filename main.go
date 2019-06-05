@@ -68,7 +68,7 @@ func main() {
 
 	nodes := make(map[string]*node)
 
-	cliresult.SetBorder(true).SetTitle("CLI Result (ctrl+r)")
+	cliresult.SetBorder(true).SetTitle("CLI Result (Ctrl+y)")
 
 	i := 0
 	for _, a := range aliasKeys {
@@ -189,7 +189,7 @@ func main() {
 		} else if key.Key() == tcell.KeyCtrlL {
 			cli.SetText("")
 			app.SetFocus(cli)
-		} else if key.Key() == tcell.KeyCtrlR {
+		} else if key.Key() == tcell.KeyCtrlY {
 			app.SetFocus(cliresult)
 		}
 		return key
