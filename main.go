@@ -24,7 +24,7 @@ var app = tview.NewApplication()
 
 func main() {
 
-	cliresult := tview.NewTextView().SetDynamicColors(true)
+	cliresult := tview.NewTextView().SetDynamicColors(true).SetWrap(false)
 	cli := tview.NewInputField()
 	list := tview.NewList()
 
@@ -38,19 +38,21 @@ func main() {
 	}
 
 	lines := strings.Split(out.String(), "\n")
+	currentnode := ""
 	aliases := make(map[string]*alias)
-	for _, line := range lines {
+	for i, line := range lines {
 		args, _ := parseCommandLine(line)
 		if len(args) > 0 {
 			name := strings.Split(args[1], "-")[1]
 			cmd := args[2][1:]
 			aliases[name] = &alias{&name, &cmd}
-			fmt.Fprintf(cliresult, "%q\n", cmd)
+			if i == 0 {
+				currentnode = name
+			}
 		}
 	}
 
 	nodes := make(map[string]*node)
-	currentnode := "sleepy"
 
 	cliresult.SetBorder(true).SetTitle("CLI Result")
 
@@ -69,6 +71,25 @@ func main() {
 		})
 		i++
 	}
+
+	firstpath := aliases[currentnode].Path
+	runpathsegs := strings.Split(*firstpath, "/")
+	conf := append(runpathsegs[:len(runpathsegs)-1], "bitcoin.conf")
+	confpath := strings.Split(strings.Join(conf, "/"), "=")[1]
+	confcmd := fmt.Sprintf("bitcoin-cli --conf=%s", confpath)
+	fmt.Fprintf(cliresult, confcmd)
+	name := "Regtest"
+	aliases[name] = &alias{&name, &confcmd}
+	s := -1
+	anode := &node{"", []string{}, &s}
+	nodes[name] = anode
+
+	list.AddItem(name, "", 'r', func() {
+		cli.SetText("")
+		currentnode = name
+		cliresult.SetText(nodes[name].Buff)
+		app.SetFocus(cli)
+	})
 
 	list.AddItem("Quit", "Press to exit", 'q', func() {
 		app.Stop()
