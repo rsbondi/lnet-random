@@ -7,6 +7,7 @@ import (
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 	"os/exec"
+	"sort"
 	"strings"
 )
 
@@ -23,8 +24,18 @@ type alias struct {
 
 var app = tview.NewApplication()
 
-func main() {
+func sortAliasKeys(a map[string]*alias) []string {
+	keys := make([]string, 0, len(a))
 
+	for key := range a {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+	return keys
+}
+
+func main() {
 	cliresult := tview.NewTextView().SetDynamicColors(true) //.SetWrap(false)
 	cli := tview.NewInputField()
 	list := tview.NewList()
@@ -53,21 +64,23 @@ func main() {
 		}
 	}
 
+	aliasKeys := sortAliasKeys(aliases)
+
 	nodes := make(map[string]*node)
 
 	cliresult.SetBorder(true).SetTitle("CLI Result (ctrl+r)")
 
 	i := 0
-	for _, a := range aliases {
+	for _, a := range aliasKeys {
 		s := -1
 		anode := &node{"", []string{}, &s}
-		nodes[*a.Name] = anode
+		nodes[*aliases[a].Name] = anode
 
-		name := a.Name
-		list.AddItem(*a.Name, "", rune('a'+byte(i)), func() {
+		name := *aliases[a].Name
+		list.AddItem(*aliases[a].Name, "", rune('a'+byte(i)), func() {
 			cli.SetText("")
-			currentnode = *name
-			cliresult.SetText(nodes[*name].Buff)
+			currentnode = name
+			cliresult.SetText(nodes[name].Buff)
 			app.SetFocus(cli)
 		})
 		i++
