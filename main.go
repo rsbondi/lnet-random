@@ -15,39 +15,52 @@ type node struct {
 	CmdIndex *int
 }
 
+type alias struct {
+	Name *string
+	Path string
+}
+
+var app = tview.NewApplication()
+
 func main() {
+	sleepy := "sleepy"
+	grumpy := "grumpy"
+	dopey := "dopey"
+	sneezy := "sneezy"
+	aliases := []*alias{
+		&alias{&sleepy, ""},
+		&alias{&grumpy, ""},
+		&alias{&dopey, ""},
+		&alias{&sneezy, ""},
+	}
 	nodes := make(map[string]*node)
-	s := -1
-	sleepy := &node{"", []string{}, &s}
-	nodes["sleepy"] = sleepy
-	g := -1
-	grumpy := &node{"", []string{}, &g}
-	nodes["grumpy"] = grumpy
 	currentnode := "sleepy"
 
-	app := tview.NewApplication()
-	middle := tview.NewTextView().SetDynamicColors(true)
-
+	cliresult := tview.NewTextView().SetDynamicColors(true)
 	cli := tview.NewInputField()
-	middle.SetBorder(true).SetTitle("CLI Result")
-	list := tview.NewList().
-		AddItem("Sleepy", "2 in 1 out 92000 sats", 'a', func() {
+	list := tview.NewList()
+
+	// sections := []tview.Primitive{cli, cliresult, list}
+
+	cliresult.SetBorder(true).SetTitle("CLI Result")
+
+	for i, a := range aliases {
+		s := -1
+		anode := &node{"", []string{}, &s}
+		nodes[*a.Name] = anode
+
+		name := a.Name
+		list.AddItem(*a.Name, "", rune('a'+byte(i)), func() {
 			cli.SetText("")
-			currentnode = "sleepy"
-			middle.SetText(nodes["sleepy"].Buff)
+			currentnode = *name
+			cliresult.SetText(nodes[*name].Buff)
 			app.SetFocus(cli)
-		}).
-		AddItem("Grumpy", "Some explanatory text", 'b', func() {
-			cli.SetText("")
-			currentnode = "grumpy"
-			middle.SetText(nodes["grumpy"].Buff)
-			app.SetFocus(cli)
-		}).
-		AddItem("Dopy", "Some explanatory text", 'c', nil).
-		AddItem("Sneezy", "Some explanatory text", 'd', nil).
-		AddItem("Quit", "Press to exit", 'q', func() {
-			app.Stop()
 		})
+	}
+
+	list.AddItem("Quit", "Press to exit", 'q', func() {
+		app.Stop()
+	})
 
 	list.SetBorder(true).SetTitle("Nodes (Ctrl+n)")
 	cli.
@@ -59,14 +72,14 @@ func main() {
 		if key.Key() == tcell.KeyEnter {
 			text := cli.GetText()
 			cmdfmt := fmt.Sprintf("[#ff0000]# %s[white]\n", text)
-			fmt.Fprintf(middle, cmdfmt)
+			fmt.Fprintf(cliresult, cmdfmt)
 			if text == "" {
-				fmt.Fprintf(middle, "Please provide a command to execute\n")
+				fmt.Fprintf(cliresult, "Please provide a command to execute\n")
 				return key
 			}
 			args, err := parseCommandLine(text)
 			if err != nil {
-				fmt.Fprintf(middle, "%s\n", err.Error())
+				fmt.Fprintf(cliresult, "%s\n", err.Error())
 			}
 			cmd := exec.Command(args[0], args[1:]...)
 			cmd.Stdin = strings.NewReader("some input")
@@ -74,10 +87,10 @@ func main() {
 			cmd.Stdout = &out
 			err = cmd.Run()
 			if err != nil {
-				fmt.Fprintf(middle, "%s\n", err.Error())
+				fmt.Fprintf(cliresult, "%s\n", err.Error())
 			}
 
-			fmt.Fprintf(middle, "%s\n", out.String())
+			fmt.Fprintf(cliresult, "%s\n", out.String())
 			nodes[currentnode].Buff += cmdfmt
 			nodes[currentnode].Buff += out.String()
 			nodes[currentnode].Cmds = append(nodes[currentnode].Cmds, cli.GetText())
@@ -116,7 +129,7 @@ func main() {
 			cli.SetText("")
 			app.SetFocus(cli)
 		} else if key.Key() == tcell.KeyCtrlR {
-			app.SetFocus(middle)
+			app.SetFocus(cliresult)
 		}
 		return key
 	})
@@ -125,8 +138,9 @@ func main() {
 		AddItem(list, 40, 1, true).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(cli, 3, 1, false).
-			AddItem(middle, 0, 3, false), 0, 2, false).
+			AddItem(cliresult, 0, 3, false), 0, 2, false).
 		AddItem(tview.NewBox().SetBorder(true).SetTitle("Node info"), 40, 1, false)
+
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		panic(err)
 	}
