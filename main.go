@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 	"os/exec"
@@ -24,7 +25,7 @@ var app = tview.NewApplication()
 
 func main() {
 
-	cliresult := tview.NewTextView().SetDynamicColors(true).SetWrap(false)
+	cliresult := tview.NewTextView().SetDynamicColors(true) //.SetWrap(false)
 	cli := tview.NewInputField()
 	list := tview.NewList()
 
@@ -54,7 +55,7 @@ func main() {
 
 	nodes := make(map[string]*node)
 
-	cliresult.SetBorder(true).SetTitle("CLI Result")
+	cliresult.SetBorder(true).SetTitle("CLI Result (ctrl+r)")
 
 	i := 0
 	for _, a := range aliases {
@@ -77,7 +78,6 @@ func main() {
 	conf := append(runpathsegs[:len(runpathsegs)-1], "bitcoin.conf")
 	confpath := strings.Split(strings.Join(conf, "/"), "=")[1]
 	confcmd := fmt.Sprintf("bitcoin-cli --conf=%s", confpath)
-	fmt.Fprintf(cliresult, confcmd)
 	name := "Regtest"
 	aliases[name] = &alias{&name, &confcmd}
 	s := -1
@@ -97,7 +97,7 @@ func main() {
 
 	list.SetBorder(true).SetTitle("Nodes (Ctrl+n)")
 	cli.
-		SetPlaceholder("Enter cli command").
+		SetPlaceholder("Enter cli command - use Ctrl+v to paste (no shift)").
 		SetFieldBackgroundColor(tcell.ColorBlack).
 		SetFieldWidth(0).SetBorder(true).SetTitle("CLI (Clrl+l)")
 
@@ -154,6 +154,18 @@ func main() {
 			if *index >= 0 && *index < len(nodes[currentnode].Cmds) {
 				cli.SetText(nodes[currentnode].Cmds[*index])
 			}
+		} else if key.Key() == tcell.KeyCtrlV {
+			clip, err := clipboard.ReadAll()
+			if err != nil {
+				fmt.Fprintf(cliresult, "%s\n", err.Error())
+			} else {
+				full := strings.Replace(clip, "\n", "", -1)
+				hack := strings.Split(full, "││") // TODO: fix if selected with result pane active "│║" "║│"
+				if len(hack) == 3 {
+					clip = fmt.Sprintf("%s%s", hack[0], hack[2])
+				}
+				cli.SetText(fmt.Sprintf("%s%s", cli.GetText(), clip)) // TODO: this only paste to end, fix for insert
+			}
 		}
 		return key
 	})
@@ -174,8 +186,7 @@ func main() {
 		AddItem(list, 40, 1, true).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(cli, 3, 1, false).
-			AddItem(cliresult, 0, 3, false), 0, 2, false).
-		AddItem(tview.NewBox().SetBorder(true).SetTitle("Node info"), 40, 1, false)
+			AddItem(cliresult, 0, 3, false), 0, 2, false)
 
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		panic(err)
