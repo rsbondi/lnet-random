@@ -55,7 +55,9 @@ func main() {
 	for i, line := range lines {
 		args, _ := parseCommandLine(line)
 		if len(args) > 0 {
-			name := strings.Split(args[1], "-")[1]
+			nargs := strings.Split(line, "-")
+			qname := strings.Split(nargs[1], "=")[0]
+			name := strings.Replace(qname, "\"", "", 2)
 			cmd := args[2][1:]
 			aliases[name] = &alias{&name, &cmd}
 			if i == 0 {

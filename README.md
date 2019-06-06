@@ -37,3 +37,5 @@ lnet-cli shutdown
 [GUI video](https://youtu.be/Z6EAhRpU2Nw)
 
 [Video for CLI UI](https://youtu.be/Hb2-DwtqYYk)
+
+[download CLI UI linux-x64](https://moonbreeze.richardbondi.net/lnui)
