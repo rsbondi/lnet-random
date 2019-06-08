@@ -39,6 +39,7 @@ func main() {
 	cliresult := tview.NewTextView().SetDynamicColors(true) //.SetWrap(false)
 	cli := tview.NewInputField()
 	list := tview.NewList()
+	list.ShowSecondaryText(false)
 
 	cmd := exec.Command("lnet-cli", "alias")
 	cmd.Stdin = strings.NewReader("some input")
