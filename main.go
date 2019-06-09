@@ -185,6 +185,7 @@ func main() {
 	app.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
 		if key.Key() == tcell.KeyCtrlN {
 			app.SetFocus(list)
+			list.InputHandler()(tcell.NewEventKey(tcell.KeyEnter, '0', tcell.ModNone), func(tview.Primitive) { app.SetFocus(list) })
 		} else if key.Key() == tcell.KeyCtrlL {
 			cli.SetText("")
 			app.SetFocus(cli)
