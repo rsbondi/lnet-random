@@ -72,6 +72,14 @@ func main() {
 
 	cliresult.SetBorder(false).SetTitle("CLI Result (Ctrl+y)")
 
+	cliresult.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
+		if key.Key() == tcell.KeyCtrlL {
+			cliresult.SetText("")
+			nodes[currentnode].Buff = ""
+		}
+		return key
+	})
+
 	i := 0
 	for _, a := range aliasKeys {
 		s := -1
@@ -115,7 +123,7 @@ func main() {
 	cli.
 		SetPlaceholder("Enter cli command - use Ctrl+v to paste (no shift)").
 		SetFieldBackgroundColor(tcell.ColorBlack).
-		SetFieldWidth(0).SetBorder(true).SetTitle("CLI (Clrl+l) for CLI (Ctrl+y) for results")
+		SetFieldWidth(0).SetBorder(true).SetTitle("CLI (Ctrl+i) for CLI (Ctrl+y) for results")
 
 	cli.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
 		if key.Key() == tcell.KeyEnter {
@@ -186,7 +194,7 @@ func main() {
 		if key.Key() == tcell.KeyCtrlN {
 			app.SetFocus(list)
 			list.InputHandler()(tcell.NewEventKey(tcell.KeyEnter, '0', tcell.ModNone), func(tview.Primitive) { app.SetFocus(list) })
-		} else if key.Key() == tcell.KeyCtrlL {
+		} else if key.Key() == tcell.KeyCtrlI {
 			cli.SetText("")
 			app.SetFocus(cli)
 		} else if key.Key() == tcell.KeyCtrlY {
