@@ -38,8 +38,7 @@ func sortAliasKeys(a map[string]*alias) []string {
 func main() {
 	cliresult := tview.NewTextView().SetDynamicColors(true) //.SetWrap(false)
 	cli := tview.NewInputField()
-	list := tview.NewList()
-	list.ShowSecondaryText(false)
+	list := tview.NewDropDown()
 
 	cmd := exec.Command("lnet-cli", "alias")
 	cmd.Stdin = strings.NewReader("some input")
@@ -71,7 +70,7 @@ func main() {
 
 	nodes := make(map[string]*node)
 
-	cliresult.SetBorder(true).SetTitle("CLI Result (Ctrl+y)")
+	cliresult.SetBorder(false).SetTitle("CLI Result (Ctrl+y)")
 
 	i := 0
 	for _, a := range aliasKeys {
@@ -80,7 +79,7 @@ func main() {
 		nodes[*aliases[a].Name] = anode
 
 		name := *aliases[a].Name
-		list.AddItem(*aliases[a].Name, "", rune('a'+byte(i)), func() {
+		list.AddOption(*aliases[a].Name, func() {
 			cli.SetText("")
 			currentnode = name
 			cliresult.SetText(nodes[name].Buff)
@@ -100,22 +99,23 @@ func main() {
 	anode := &node{"", []string{}, &s}
 	nodes[name] = anode
 
-	list.AddItem(name, "", 'r', func() {
+	list.AddOption(name, func() {
 		cli.SetText("")
 		currentnode = name
 		cliresult.SetText(nodes[name].Buff)
 		app.SetFocus(cli)
 	})
 
-	list.AddItem("Quit", "Press to exit", 'q', func() {
+	list.AddOption("Quit", func() {
 		app.Stop()
 	})
 
 	list.SetBorder(true).SetTitle("Nodes (Ctrl+n)")
+	list.SetCurrentOption(0)
 	cli.
 		SetPlaceholder("Enter cli command - use Ctrl+v to paste (no shift)").
 		SetFieldBackgroundColor(tcell.ColorBlack).
-		SetFieldWidth(0).SetBorder(true).SetTitle("CLI (Clrl+l)")
+		SetFieldWidth(0).SetBorder(true).SetTitle("CLI (Clrl+l) for CLI (Ctrl+y) for results")
 
 	cli.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
 		if key.Key() == tcell.KeyEnter {
@@ -176,11 +176,7 @@ func main() {
 				fmt.Fprintf(cliresult, "%s\n", err.Error())
 			} else {
 				full := strings.Replace(clip, "\n", "", -1)
-				hack := strings.Split(full, "││") // TODO: fix if selected with result pane active "│║" "║│"
-				if len(hack) == 3 {
-					clip = fmt.Sprintf("%s%s", hack[0], hack[2])
-				}
-				cli.SetText(fmt.Sprintf("%s%s", cli.GetText(), clip)) // TODO: this only paste to end, fix for insert
+				cli.SetText(fmt.Sprintf("%s%s", cli.GetText(), full)) // TODO: this only paste to end, fix for insert
 			}
 		}
 		return key
@@ -198,11 +194,12 @@ func main() {
 		return key
 	})
 
-	flex := tview.NewFlex().
-		AddItem(list, 40, 1, true).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(cli, 3, 1, false).
-			AddItem(cliresult, 0, 3, false), 0, 2, false)
+	flex := tview.NewFlex().SetDirection(tview.FlexRow)
+	col := tview.NewFlex().SetDirection(tview.FlexColumn)
+	col.AddItem(list, 40, 1, false)
+	col.AddItem(cli, 0, 1, true)
+	flex.AddItem(col, 3, 1, true)
+	flex.AddItem(cliresult, 0, 5, false)
 
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		panic(err)
