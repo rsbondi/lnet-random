@@ -150,7 +150,7 @@ func main() {
 				fmt.Fprintf(cliresult, "%s\n", err.Error())
 			}
 
-			fmt.Fprintf(cliresult, "%s\n", out.String())
+			fmt.Fprintf(cliresult, "%s\n", tview.Escape(out.String()))
 			nodes[currentnode].Buff += cmdfmt
 			nodes[currentnode].Buff += out.String()
 			nodes[currentnode].Cmds = append(nodes[currentnode].Cmds, cli.GetText())
