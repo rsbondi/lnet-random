@@ -39,3 +39,9 @@ lnet-cli shutdown
 [Video for CLI UI](https://youtu.be/Hb2-DwtqYYk)
 
 [download CLI UI linux-x64](https://moonbreeze.richardbondi.net/lnui)
+
+## lnd Users
+
+I developed a [similar project](https://github.com/rsbondi/lnd-dev) for lnd, it is all integrated into one product with a shell interface.
+
+
